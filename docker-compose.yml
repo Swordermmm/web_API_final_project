@@ -1,0 +1,25 @@
+services:
+  nats:
+    image: nats:latest
+    container_name: weather_nats
+    ports:
+      - "4222:4222"
+      - "8222:8222"
+    command: ["-m", "8222"]
+
+  api:
+    build: .
+    container_name: weather_api
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=sqlite+aiosqlite:///./data/weather.db
+      - NATS_URL=nats://nats:4222
+      - OPEN_METEO_URL=https://api.open-meteo.com/v1/forecast
+      - LATITUDE=55.7558
+      - LONGITUDE=37.6173
+      - BACKGROUND_TASK_INTERVAL=300
+    command: >
+      sh -c "sleep 5 && 
+      uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+    restart: unless-stopped
